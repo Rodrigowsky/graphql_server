@@ -99,6 +99,7 @@ const typeDefs = gql`
   }
   type Author {
     author: String
+    born: Int
     bookCount: String!
   }
   type Query {
@@ -113,7 +114,11 @@ const typeDefs = gql`
       published: Int!
       author: String!
       genres: [String!]!
-    ): Book
+    ): Book,
+    editAuthor(
+      name: String!
+      year: Int!
+    ): Author
   }
 `;
 
@@ -145,6 +150,7 @@ const resolvers = {
   },
   Author: {
     author: (root) => root.name,
+    born : (root) => root.born,
     bookCount: (root) => {
       return books.filter((p) => p.author === root.name).length;
     },
@@ -159,9 +165,22 @@ const resolvers = {
         authors.push({ name: args.author, born: null });
         return book;
       }
-      
     },
-  },
+    editAuthor: (root, args) => {
+       authors.map(p => {
+        if (p.name === args.name) {
+          p.born = args.year;
+         }
+       })
+      const author = authors.filter((p) => p.name === args.name);
+      if (author.length > 0) {
+        return { ...author[0] };
+      } else {
+        throw new UserInputError('Name not found', {          invalidArgs: args.name,        })
+      };
+      
+    }
+  }
 };
 
 const server = new ApolloServer({
